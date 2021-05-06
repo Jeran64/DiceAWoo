@@ -2,9 +2,9 @@ import math
 import random
 import pygame
 
-
-
-
+attemptCount=0;
+rollCount=0;
+previousRollCount=0;
 diceLevel=0;
 currentScore=0;
 totalScore=0;
@@ -13,7 +13,7 @@ diceOutcomes=[
     ["blue",["win",.35],["lose",.35],["nothing",.1],["gameover",.1],["levelup",.1]],
     ["green",["win",.3],["lose",.3],["nothing",.1],["prize",.1],["gameover",.1],["levelup",.1]],
     ["yellow",["win",.3],["lose",.3],["nothing",.1],["prize",.1],["gameover",.1],["levelup",.1]],
-    ["silver",["win",.3],["lose",.3],["nothing",.1],["jackpot",.1],["gameover",.1],["levelup",.1]],
+    ["silver",["win",.3],["lose",.3],["nothing",.15],["jackpot",.1],["gameover",.1],["levelup",.05]],
     ["purple",["win",.3],["lose",.3],["jackpot",.1],["prize",.1],["gameover",.1],["random",.1]]
     ];
 prizeList=["burger","fries","pizza","sushi","soup","BBQ","spaghetti","salad","curry","carrots","strawberries","steak","beer"];
@@ -34,14 +34,14 @@ def getRoll(rollFloat):
     return diceOutcomes[diceLevel][b][0]#return the name of the outcome
 
 def executeResults(result):
-    global diceLevel,currentScore,totalScore,wonPrizes, diceOutcomes, prizeList, textHolder
+    global diceLevel,currentScore,totalScore,wonPrizes, diceOutcomes, prizeList, textHolder,attemptCount, rollCount,previousRollCount
     if(result=="win"):
-        prize=random.randrange(1,10)*(diceLevel+1)
+        prize=random.randrange(1,5)*(diceLevel+1)
         currentScore=currentScore+prize
         textHolder=drawFont.render("You won "+str(prize)+" points!",True,(0,0,0));
         #todo high level point doubling
     elif(result=="lose"):
-        prize=random.randrange(-10,-1)*(diceLevel+1)
+        prize=random.randrange(-5,-1)*(diceLevel+1)
         currentScore=currentScore+prize
         textHolder=drawFont.render("oh no! you lost "+str(prize)+" points.",True,(0,0,0));
         #to do, add high level point halfing.
@@ -52,12 +52,15 @@ def executeResults(result):
             diceLevel=diceLevel+1;
             textHolder=drawFont.render("oh boy! You leveled up!",True,(0,0,0));
         else:
-            textHolder=drawFont.render("You almost leveled up!",True,(0,0,0));
+            textHolder=drawFont.render("Rats, you didn't level up!",True,(0,0,0));
     elif(result=="gameover"):
         if(random.random()>.5):
             diceLevel=0;
             currentScore=0;
             wonPrizes=[];
+            previousRollCount=rollCount+1;
+            rollCount=0;
+            attemptCount=attemptCount+1;
             textHolder=drawFont.render("YOU LOST! THE AGONY!!!",True,(0,0,0));
         else:
             textHolder=drawFont.render("You almost lost there!",True,(0,0,0));
@@ -74,6 +77,8 @@ def executeResults(result):
         textHolder=drawFont.render("YEAH ! That's the JACKPOT! You won "+str(prize),True,(0,0,0));
         currentScore=currentScore+prize;
         diceLevel=0;
+        rollCount=0;
+        attemptCount=attemptCount+1;
         totalScore=totalScore+currentScore;
         currentScore=0;
         wonPrizes=[];
@@ -95,16 +100,28 @@ drawFont = pygame.font.SysFont('Comic Sans MS', 12)
 def showResults():
     global result,currentScore, diceLevel, prize
     diceToShow= pygame.image.load(diceOutcomes[diceLevel][0]+result+".gif");#load the appropriate dice image.
-    gameDisplay.fill((128,128,128));#clears out the screen for the next draw
+    gameDisplay.fill((255,255,255));#clears out the screen for the next draw
     gameDisplay.blit(diceToShow,(88,0));#write the pixels to canvas. show the dice in the top left
     
 def showText():
-    global textHolder
+    global textHolder, attemptCount, rollCount, previousRollCount
     gameDisplay.blit(textHolder,(0,80));#draw the text under the image.
     textHolder=drawFont.render("score:"+str(currentScore),True,(0,0,0));
     gameDisplay.blit(textHolder,(0,94));#draw score under that.
     textHolder=drawFont.render("prizes:"+str(wonPrizes),True,(0,0,0));
     gameDisplay.blit(textHolder,(0,108));#draw score under that.
+    if(rollCount==0): #when you roll a game over, it will update the attempt count right away, but we dont want to show that to the user.
+        textHolder=drawFont.render("attempt:"+str(attemptCount-1),True,(0,0,0));
+        gameDisplay.blit(textHolder,(0,0));#draw score under that.
+        textHolder=drawFont.render("roll #"+str(previousRollCount),True,(0,0,0));
+        gameDisplay.blit(textHolder,(0,14));#draw score under that.
+    else:
+        textHolder=drawFont.render("attempt:"+str(attemptCount),True,(0,0,0));
+        gameDisplay.blit(textHolder,(0,0));#draw score under that.
+        textHolder=drawFont.render("roll #"+str(rollCount),True,(0,0,0));
+        gameDisplay.blit(textHolder,(0,14));#draw score under that.
+    textHolder=drawFont.render("winnings:"+str(totalScore),True,(0,0,0));
+    gameDisplay.blit(textHolder,(0,28));#draw score under that.
 
 def showOnScreen():
 
@@ -119,9 +136,19 @@ while (1==1):
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
+        if event.type == pygame.MOUSEBUTTONUP:
+            print("Rolling a "+diceOutcomes[diceLevel][0]+" die...");
+            result=getRoll(random.random())#roll the dice
+            rollCount=rollCount+1;
+            print(result) #show me what you got
+            showResults(); #draw dice on screen.
+            executeResults(result); #act on the game's rules (do this after the draw so the color is right on the dice)
+            showText();#tell the user about what they got.
+            showOnScreen(); #slap it on the screen.
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 print("Rolling a "+diceOutcomes[diceLevel][0]+" die...");
+                rollCount=rollCount+1;
                 result=getRoll(random.random())#roll the dice
                 print(result) #show me what you got
                 showResults(); #draw dice on screen.
@@ -131,6 +158,8 @@ while (1==1):
 
             if event.key == pygame.K_RETURN:
                 totalScore=totalScore+currentScore
+                previousRollCount=rollCount;
+                rollCount=0;
                 currentScore=0;
                 diceLevel=0;
                 wonPrizes=[];
@@ -139,5 +168,6 @@ while (1==1):
                 showResults();
                 showText();#tell the user about what they got.
                 showOnScreen(); #slap it on the screen.
+                attemptCount=attemptCount+1;
 
             
