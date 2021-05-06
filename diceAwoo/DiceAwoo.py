@@ -14,7 +14,7 @@ diceOutcomes=[
     ["green",["win",.3],["lose",.3],["nothing",.1],["prize",.1],["gameover",.1],["levelup",.1]],
     ["yellow",["win",.3],["lose",.3],["nothing",.1],["prize",.1],["gameover",.1],["levelup",.1]],
     ["silver",["win",.3],["lose",.3],["nothing",.1],["jackpot",.1],["gameover",.1],["levelup",.1]],
-    ["purple",["win",.3],["lose",.3],["nothing",.1],["prize",.1],["gameover",.1],["random",.1]]
+    ["purple",["win",.3],["lose",.3],["jackpot",.1],["prize",.1],["gameover",.1],["random",.1]]
     ];
 prizeList=["burger","fries","pizza","sushi","soup","BBQ","spaghetti","salad","curry","carrots","strawberries","steak","beer"];
 wonPrizes=[];
@@ -38,36 +38,45 @@ def executeResults(result):
     if(result=="win"):
         prize=random.randrange(1,10)*(diceLevel+1)
         currentScore=currentScore+prize
-        textHolder=drawFont.render("you got "+str(prize)+" points!",True,(0,0,0));
+        textHolder=drawFont.render("You won "+str(prize)+" points!",True,(0,0,0));
         #todo high level point doubling
     elif(result=="lose"):
         prize=random.randrange(-10,-1)*(diceLevel+1)
         currentScore=currentScore+prize
-        textHolder=drawFont.render("oh no you lost "+str(prize)+" points.",True,(0,0,0));
+        textHolder=drawFont.render("oh no! you lost "+str(prize)+" points.",True,(0,0,0));
         #to do, add high level point halfing.
     elif(result=="nothing"):
         textHolder=drawFont.render("Nothing happened.... we swear...",True,(0,0,0));
     elif(result=="levelup"):
         if(random.random()>.5):
             diceLevel=diceLevel+1;
-            textHolder=drawFont.render("oh boy, you leveled up!",True,(0,0,0));
+            textHolder=drawFont.render("oh boy! You leveled up!",True,(0,0,0));
         else:
-            textHolder=drawFont.render("you leveled... oh wait... no you didn't. sorry :(",True,(0,0,0));
+            textHolder=drawFont.render("You almost leveled up!",True,(0,0,0));
     elif(result=="gameover"):
         if(random.random()>.5):
             diceLevel=0;
             currentScore=0;
+            wonPrizes=[];
             textHolder=drawFont.render("YOU LOST! THE AGONY!!!",True,(0,0,0));
         else:
-            textHolder=drawFont.render("you lose!... haha just kidding, you are fine. That was close tho!",True,(0,0,0));
+            textHolder=drawFont.render("You almost lost there!",True,(0,0,0));
     elif(result=="prize"):
         prize=prizeList[random.randint(0,len(prizeList)-1)];  
         textHolder=drawFont.render("oh boy, a prize! you won "+str(prize),True,(0,0,0));
         wonPrizes.append(prize);
+    elif(result=="random"):
+        prize=random.randrange(100,500);
+        textHolder=drawFont.render("weird! you found "+str(prize),True,(0,0,0));
+        currentScore=currentScore+prize
     elif(result=="jackpot"):
-        prize=rand.randrange(1000,10000);
-        textHolder=drawFont.render("YEAH YEAH YEEEEEAAAAH. That's the JACKPOT! You won "+str(prize),True,(0,0,0));
+        prize=random.randrange(1000,10000);
+        textHolder=drawFont.render("YEAH ! That's the JACKPOT! You won "+str(prize),True,(0,0,0));
         currentScore=currentScore+prize;
+        diceLevel=0;
+        totalScore=totalScore+currentScore;
+        currentScore=0;
+        wonPrizes=[];
         
     if(currentScore<0):#we cant have negative points in this game.
         currentScore=0;
@@ -94,6 +103,8 @@ def showText():
     gameDisplay.blit(textHolder,(0,80));#draw the text under the image.
     textHolder=drawFont.render("score:"+str(currentScore),True,(0,0,0));
     gameDisplay.blit(textHolder,(0,94));#draw score under that.
+    textHolder=drawFont.render("prizes:"+str(wonPrizes),True,(0,0,0));
+    gameDisplay.blit(textHolder,(0,108));#draw score under that.
 
 def showOnScreen():
 
@@ -119,5 +130,14 @@ while (1==1):
                 showOnScreen(); #slap it on the screen.
 
             if event.key == pygame.K_RETURN:
-                print("Not implemented yet, but you would have cashed out!");
+                totalScore=totalScore+currentScore
+                currentScore=0;
+                diceLevel=0;
+                wonPrizes=[];
+                result="nothing"
+                textHolder=drawFont.render("CASH OUT!!! Total Score: "+str(totalScore),True,(0,0,0));
+                showResults();
+                showText();#tell the user about what they got.
+                showOnScreen(); #slap it on the screen.
+
             
